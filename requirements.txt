@@ -1,0 +1,4 @@
+tabulate
+sympy
+typer
+pryttier
