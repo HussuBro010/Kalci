@@ -8,83 +8,97 @@ from pryttier.colors import coloredText, AnsiRGB, hsl2rgb
 
 app = typer.Typer()
 
-stackPath = "C:/Users/DELL/Desktop/Hussain/Programming/Python/Python/Tools/kalci/variables.json"
+variablePath = "C:/Users/DELL/Desktop/Hussain/Programming/Python/Kalci/variables.json"
 
-with open(stackPath, "r") as f:
-    stack: dict = json.load(f)
+with open(variablePath, "r") as f:
+    variable: dict = json.load(f)
 
 @app.command(help="Simplifies given expression.")
 def simplify(expr: str):
-    for i, j in stack.items():
-        expr = expr.replace(i, j)
-    res = sy.simplify(expr)
-    sy.pprint(res)
+    for i, j in variable.items():
+        expr = expr.replace(i, f"({j})")
+    res = sy.sympify(expr)
+    sy.pprint(res.simplify())
+
+@app.command(help="Evaluates given expression to floating point number.")
+def evaluate(expr: str):
+    for i, j in variable.items():
+        expr = expr.replace(i, f"({j})")
+    res = sy.sympify(expr)
+    sy.pprint(res.evalf())
 
 @app.command(help="Factorizes given expression.")
 def factorize(expr: str):
-    for i, j in stack.items():
-        expr = expr.replace(i, j)
+    for i, j in variable.items():
+        expr = expr.replace(i, f"({j})")
     res = sy.factor(expr)
     sy.pprint(res)
 
 @app.command(help="Expands given expression.")
 def expand(expr: str):
-    for i, j in stack.items():
+    for i, j in variable.items():
         expr = expr.replace(i, j)
     res = sy.expand(expr)
     sy.pprint(res)
 
-@app.command(help="Solve For en expression in an expression.")
+@app.command(help="Solve For an expression in an equation.")
 def solveFor(equation: str, solvefor: str):
-    for i, j in stack.items():
-        equation = equation.replace(i, j)
-        solvefor = solvefor.replace(i, j)
+    for i, j in variable.items():
+        equation = equation.replace(i, f"({j})")
+        solvefor = solvefor.replace(i, f"({j})")
     lhs, rhs = equation.split("=")
-    eq = sy.Equality(sy.sympify(lhs), sy.sympify(rhs))
+    eq = sy.Eq(sy.sympify(lhs), sy.sympify(rhs))
     res = sy.solve(eq, sy.sympify(solvefor))
 
     sy.pprint(res)
 
 @app.command(help="Compute roots of a polynomial.")
 def roots(expr: str):
-    for i, j in stack.items():
-        expr = expr.replace(i, j)
+    for i, j in variable.items():
+        expr = expr.replace(i, f"({j})")
     res = sy.roots(expr)
 
-    sy.pprint(res)
+    sy.pprint(list(res.keys()))
 
 @app.command(help="Computes derivative.")
 def derive(expr: str, syms: list[str]):
-    for i, j in stack.items():
-        expr = expr.replace(i, j)
+    for i, j in variable.items():
+        expr = expr.replace(i, f"({j})")
     res = sy.diff(expr, *[sy.sympify(s) for s in syms])
     sy.pprint(res)
 
 @app.command(help="Computes indefinite integral.")
-def integrate(expr: str, sym: list[str]):
-    for i, j in stack.items():
-        expr = expr.replace(i, j)
+def integrate(expr: str, syms: list[str]):
+    for i, j in variable.items():
+        expr = expr.replace(i, f"({j})")
     res = sy.integrate(expr, *[sy.sympify(s) for s in syms])
     sy.pprint(res)
 
 @app.command(help="Computes definite integral.")
-def integrate_def(expr: str, syms: list[str], lims: str):
-    for i, j in stack.items():
-        expr = expr.replace(i, j)
-    lims = [(l.split("->")[0], l.split("->")[1]) for l in lims.split(" ")]
-    if len(lims) == 1:
-        res = sy.integrate(expr, *[(sy.sympify(syms[s]), lims[0][0], lims[0][1]) for s in range(len(syms))])
+def integrate_def(expr: str, syms: str, lims: str):
+    syms = syms.split(" ")
+    for i, j in variable.items():
+        expr = expr.replace(i, f"({j})")
+    bounds = [(l.split("->")[0], l.split("->")[1]) for l in lims.split(" ")]
+    if len(bounds) == 1:
+        fvars = []
+        for s in range(len(syms)):
+            if s == len(syms) - 1:
+                fvars.append((sy.sympify(syms[s]), bounds[0][0], bounds[0][1]))
+            else:
+                fvars.append(sy.sympify(syms[s]))
+        res = sy.integrate(expr, *fvars)
     else:
         try:
-            res = sy.integrate(expr, *[(sy.sympify(syms[s]), lims[s][0], lims[s][1]) for s in range(len(syms))])
+            res = sy.integrate(expr, *[(sy.sympify(syms[s]), bounds[s][0], bounds[s][1]) for s in range(len(syms))])
         except IndexError:
-            print("Either specify limits per integration or specify one limit for all")
+            print("Either specify limits per integration or specify one limit for final evaluation")
             return -1
     sy.pprint(res)
 
 @app.command(help="Generate Truth table for given boolean expression.")
 def truthtable(expr: str):
-    for i, j in stack.items():
+    for i, j in variable.items():
         expr = expr.replace(i, j)
     chars = "abcdefghijklmnopqrstuvwxyz"
     res = sy.simplify(sy.sympify(expr))
@@ -227,28 +241,28 @@ def roll(n: list[int] = typer.Argument(..., help="List of dice")):
 
 @app.command(help="Define a variable")
 def defvar(var_name: str, value: str):
-    stack[var_name] = value
-    with open(stackPath, "w") as f:
-        json.dump(stack, f, indent=4)
+    variable[var_name] = value
+    with open(variablePath, "w") as f:
+        json.dump(variable, f, indent=4)
 
 @app.command(help="Remove a variable")
 def rmvar(var_name: str):
     try:
-        stack.pop(var_name)
+        variable.pop(var_name)
     except KeyError:
         print(f"No Variable named {var_name}")
-    with open(stackPath, "w") as f:
-        json.dump(stack, f, indent=4)
+    with open(variablePath, "w") as f:
+        json.dump(variable, f, indent=4)
 
 @app.command(help="Prints all defined variables")
 def pvars():
-    for i, j in stack.items():
-        print(f"{i}: {j}")
+    for i, j in variable.items():
+        sy.pprint(f"{i}: {sy.sympify(j)}")
 
 @app.command(help="Clear all variable definitions")
 def clv():
     stack = {}
-    with open(stackPath, "w") as f:
+    with open(variablePath, "w") as f:
         json.dump(stack, f, indent=4)
 
 if __name__ == "__main__":
