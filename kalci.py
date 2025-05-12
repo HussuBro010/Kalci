@@ -1,4 +1,7 @@
+from fractions import Fraction
+import os
 import random
+import string
 import tabulate as tb
 from itertools import product
 import sympy as sy
@@ -8,10 +11,18 @@ from pryttier.colors import coloredText, AnsiRGB, hsl2rgb
 
 app = typer.Typer()
 
-variablePath = "C:/Users/DELL/Desktop/Hussain/Programming/Python/Kalci/variables.json"
+variablePath = os.path.abspath(os.path.join(".", "variables.json")) # to relative path
+# Error fixed :)
 
 with open(variablePath, "r") as f:
-    variable: dict = json.load(f)
+    try:
+        variable: dict = json.load(f)
+    except FileNotFoundError:
+        print("Counldn't find the variable.json file")
+    except PermissionError:
+        print("Try reexcuting the programming with admin privileg")
+    except (OSError, IOError) as e:
+        print("Counldn't access the json due to an unkown error", e)
 
 @app.command(help="Simplifies given expression.")
 def simplify(expr: str):
@@ -100,13 +111,13 @@ def integrate_def(expr: str, syms: str, lims: str):
 def truthtable(expr: str):
     for i, j in variable.items():
         expr = expr.replace(i, j)
-    chars = "abcdefghijklmnopqrstuvwxyz"
+    chars = string.ascii_lowercase
     res = sy.simplify(sy.sympify(expr))
     print(f"Simplified: {res}")
     symbols = list(res.free_symbols)
     symbols.sort(key=lambda v: chars.index(str(v)))
 
-    colStep = 360/len(symbols)
+    colStep = Fraction(360, len(symbols)) 
     syms = [[coloredText(str(a), AnsiRGB(hsl2rgb((i*colStep, 100, 80)))) for i, a in enumerate(symbols)] + ["o"]]
     ins = list(product(*[[0, 1] for _ in range(len(symbols))]))
 
@@ -177,7 +188,7 @@ def convert(utype: str, u1: str, u2: str, number: int):
         ratio1 = lengthUnits[u1]
         ratio2 = lengthUnits[u2]
 
-        res = ratio1/ratio2
+        res = Fraction(ratio1, ratio2)
 
     if utype.lower() == "area":
         areaUnits = {}
@@ -189,7 +200,7 @@ def convert(utype: str, u1: str, u2: str, number: int):
         ratio1 = areaUnits[u1]
         ratio2 = areaUnits[u2]
 
-        res = ratio1/ratio2
+        res = Fraction(ratio1, ratio2)
 
     if utype.lower() == "volume":
         volumeUnits = {}
@@ -201,7 +212,7 @@ def convert(utype: str, u1: str, u2: str, number: int):
         ratio1 = volumeUnits[u1]
         ratio2 = volumeUnits[u2]
 
-        res = ratio1/ratio2
+        res = Fraction(ratio1, ratio2)
 
     if utype.lower() == "mass":
         massUnits = {}
@@ -213,7 +224,7 @@ def convert(utype: str, u1: str, u2: str, number: int):
         ratio1 = massUnits[u1]
         ratio2 = massUnits[u2]
 
-        res = ratio1/ratio2
+        res = Fraction(ratio1, ratio2)
 
     if utype.lower() in ["freq" or "frequency"]:
         freqUnits = {}
@@ -223,7 +234,7 @@ def convert(utype: str, u1: str, u2: str, number: int):
         ratio1 = freqUnits[u1]
         ratio2 = freqUnits[u2]
 
-        res = ratio1/ratio2
+        res = Fraction(ratio1, ratio2)
 
     res *= number
     print(res)
