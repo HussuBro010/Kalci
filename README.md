@@ -13,12 +13,9 @@ Packages:
 
 ## Installation
 1. Clone this Repo using `git clone https://github.com/HussuBro010/Kalci.git`
-2. Open your shell profile. You can get the path to your profile by typing `$profile` in the terminal 
-3. Paste this in the profile (make sure to replace the path)
-```ps1
-function kalci { python "path/to/kalci.py" $args}
-```
-4. Open a new terminal window and try it out
+2. Open terminal and type `cd <path>`. Replace `<path>` with the path to the cloned repo
+3. To use it just type `dist/kalci.exe --help`.
+4. To use it anywhere add the absolute path of the dist folder to environment path variables.
 
 ## Tutorial
 After the installation, you can type `kalci --help` to get a list of all the commands.
