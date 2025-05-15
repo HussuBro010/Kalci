@@ -5,10 +5,22 @@ import sympy as sy
 import typer
 import json
 from pryttier.colors import coloredText, AnsiRGB, hsl2rgb
+import os
+import sys
 
 app = typer.Typer()
 
-variablePath = "C:/Users/DELL/Desktop/Hussain/Programming/Python/Kalci/variables.json"
+def resolve_path(path):
+    if getattr(sys, "frozen", False):
+        # If the 'frozen' flag is set, we are in bundled-app mode!
+        resolved_path = os.path.abspath(os.path.join(sys._MEIPASS, path))
+    else:
+        # Normal development mode. Use os.getcwd() or __file__ as appropriate in your case...
+        resolved_path = os.path.abspath(os.path.join(os.getcwd(), path))
+
+    return resolved_path
+
+variablePath = resolve_path("./variables.json")
 
 with open(variablePath, "r") as f:
     variable: dict = json.load(f)
